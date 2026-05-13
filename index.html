@@ -3,276 +3,215 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Lossless Core | Ultimate Edition</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <title>Lossless Core | ALAC Reference</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=DM+Mono:wght@400;500&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@uimaxbai/am-lyrics/dist/src/am-lyrics.min.js"></script>
 
   <style>
-    /* ─────────────────────────────────────────────────────
-       CSS ENGINE (Consolidated)
-    ───────────────────────────────────────────────────── */
     :root {
       --safe-t: env(safe-area-inset-top, 0px);
       --safe-b: env(safe-area-inset-bottom, 20px);
-      --accent: #fe2c55; 
-      --text: #ffffff;
-      --font: 'Nunito', 'Plus Jakarta Sans', sans-serif;
-      --mono: 'DM Mono', monospace;
+      --font: 'Nunito', sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: #000; color: #fff; font-family: var(--font); height: 100dvh; overflow: hidden; }
 
-    body {
-      background: #000;
-      color: var(--text);
-      font-family: var(--font);
-      height: 100dvh;
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* Ambient Motion Background */
-    #bg { position: fixed; inset: -100px; z-index: -1; pointer-events: none; }
-    #bg-art { 
-      width: 120%; height: 120%; object-fit: cover; 
-      filter: blur(80px) brightness(0.25) saturate(1.8); 
-      opacity: 0; transition: opacity 1.5s ease;
-    }
-    #bg-art.visible { opacity: 1; }
-    #scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 0; }
-
-    /* Layout Engine */
-    #player {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      padding: calc(var(--safe-t) + 20px) 30px calc(var(--safe-b) + 20px);
-    }
-
+    /* PC Split-View Optimization */
     .content-grid {
       display: grid;
-      grid-template-columns: 1fr 1.2fr;
-      gap: 60px;
-      max-width: 1400px;
-      width: 100%;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      max-width: 1600px;
       margin: 0 auto;
-      height: 70vh;
+      height: 80vh;
+      padding: 40px;
+      align-items: center;
     }
 
-    @media (max-width: 1000px) {
-      .content-grid { grid-template-columns: 1fr; gap: 20px; }
-      #lyrics-section { display: none; } /* Mobile toggle only */
+    @media (max-width: 900px) {
+      .content-grid { grid-template-columns: 1fr; padding: 20px; }
+      #lyrics-section { display: none; }
     }
 
-    /* Art Section - Squircle Geometry */
-    #art-section { display: flex; align-items: center; justify-content: center; }
-    #art-card {
-      width: 100%; max-width: 420px; aspect-ratio: 1/1;
-      border-radius: 32px; overflow: hidden;
-      background: #111; box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-      transition: transform 0.8s cubic-bezier(0.2, 1, 0.2, 1);
-    }
-    #art-card.playing { transform: scale(1.04); }
+    #bg { position: fixed; inset: -50px; z-index: -1; }
+    #bg-art { width: 110%; height: 110%; object-fit: cover; filter: blur(60px) brightness(0.3); opacity: 0; transition: opacity 1s; }
+    #bg-art.visible { opacity: 1; }
+
+    #art-card { width: 100%; aspect-ratio: 1/1; border-radius: 24px; background: #111; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
     #art { width: 100%; height: 100%; object-fit: cover; }
 
-    /* Metadata */
-    #meta { margin-top: 30px; }
-    #title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; }
-    #artist { font-size: 1.4rem; color: rgba(255,255,255,0.6); font-weight: 400; }
-    #source-pill { font-family: var(--mono); font-size: 0.65rem; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; width: fit-content; margin-bottom: 10px; }
+    #seek-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 20px; cursor: pointer; position: relative; }
+    #seek-fill { height: 100%; background: #fff; border-radius: 10px; width: 0%; }
 
-    /* Controls & Seek */
-    #seek-area { margin-top: 25px; }
-    #seekbar { height: 6px; background: rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; position: relative; }
-    #seek-fill { height: 100%; background: #fff; width: 0%; border-radius: 10px; position: relative; }
-    #time-row { display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--mono); font-size: 0.8rem; opacity: 0.6; }
-
-    #controls { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; }
-    .play-btn { width: 84px; height: 84px; border-radius: 50%; background: #fff; color: #000; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .icon-btn { background: none; border: none; color: #fff; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; }
-    .icon-btn:hover { opacity: 1; }
+    #controls { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+    .play-btn { width: 70px; height: 70px; border-radius: 50%; background: #fff; border: none; display: flex; align-items: center; justify-content: center; }
     .hidden { display: none; }
+    
+    #meta h1 { font-size: 1.8rem; margin: 10px 0 5px; }
+    #meta h2 { font-size: 1.2rem; opacity: 0.6; font-weight: 400; }
+    #source-pill { font-family: 'DM Mono'; font-size: 0.7rem; background: #fe2c55; padding: 4px 8px; border-radius: 4px; width: fit-content; }
 
-    /* Bottom Navigation */
-    #bottom-dock { display: flex; justify-content: space-around; margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .dock-item { background: none; border: none; color: #fff; font-weight: 800; font-size: 0.9rem; cursor: pointer; }
+    am-lyrics { --am-lyrics-font-size: 2.2rem; height: 100%; }
   </style>
 </head>
 <body>
 
   <div id="bg"><img id="bg-art" src="" alt=""></div>
-  <div id="scrim"></div>
 
   <main id="player">
     <div class="content-grid">
       <section id="now-playing">
-        <div id="source-pill">CORE_V4_OFFLINE</div>
+        <div id="source-pill">ALAC_BITPERFECT_READY</div>
+        <div id="art-card"><img id="art" src="" alt=""></div>
         
-        <div id="art-section">
-          <div id="art-card">
-            <img id="art" src="" alt="">
-          </div>
-        </div>
-
         <div id="meta">
           <h1 id="title">Lossless Core</h1>
-          <h2 id="artist">No track loaded</h2>
+          <h2 id="artist">Waiting for ALAC Import...</h2>
         </div>
 
         <div id="seek-area">
-          <div id="seekbar">
-            <div id="seek-fill"></div>
-          </div>
-          <div id="time-row">
+          <div id="seek-track" id="seekbar"><div id="seek-fill"></div></div>
+          <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.8rem; opacity:0.5;">
             <span id="t-cur">0:00</span>
             <span id="t-tot">0:00</span>
           </div>
         </div>
 
         <div id="controls">
-          <button class="icon-btn" id="prevBtn"><svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="icon-btn" onclick="core.prev()"><svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
           <button class="play-btn" id="playBtn">
-            <svg id="icon-play" width="40" height="40" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            <svg id="icon-pause" class="hidden" width="40" height="40" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            <svg id="icon-play" width="32" height="32" fill="black" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="icon-pause" class="hidden" width="32" height="32" fill="black" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
           </button>
-          <button class="icon-btn" id="nextBtn"><svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+          <button class="icon-btn" onclick="core.next()"><svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
         </div>
+        
+        <button style="margin-top:20px; width:100%; height:50px; border-radius:12px; background:rgba(255,255,255,0.1); border:none; color:white; font-weight:800;" onclick="document.getElementById('fileInput').click()">IMPORT ALAC FILES</button>
       </section>
 
       <section id="lyrics-section">
         <am-lyrics id="amLyrics" current-time="0" highlight-color="#ffffff"></am-lyrics>
       </section>
     </div>
-
-    <footer id="bottom-dock">
-      <button class="dock-item" onclick="document.getElementById('fileInput').click()">IMPORT</button>
-      <button class="dock-item" id="lyricsToggle">LYRICS</button>
-      <button class="dock-item">MODULES</button>
-    </footer>
   </main>
 
-  <input type="file" id="fileInput" hidden multiple accept="audio/*">
+  <input type="file" id="fileInput" hidden multiple accept="audio/*,.m4a">
 
   <script>
-    /* ─────────────────────────────────────────────────────
-       JAVASCRIPT ENGINE (Consolidated)
-    ───────────────────────────────────────────────────── */
     class LosslessCore {
       constructor() {
         this.audio = new Audio();
         this.queue = [];
-        this.currentIndex = 0;
-        this.isPlaying = false;
-
+        this.idx = 0;
+        this.playing = false;
         this.init();
       }
 
       init() {
-        const $ = id => document.getElementById(id);
-        
-        // Element Mapping
+        const $ = i => document.getElementById(i);
         this.els = {
-          playBtn: $('playBtn'),
-          title: $('title'),
-          artist: $('artist'),
-          art: $('art'),
-          bg: $('bg-art'),
-          fill: $('seek-fill'),
-          cur: $('t-cur'),
-          tot: $('t-tot'),
-          lyrics: $('amLyrics'),
-          card: $('art-card')
+          title: $('title'), artist: $('artist'), art: $('art'), bg: $('bg-art'),
+          fill: $('seek-fill'), cur: $('t-cur'), tot: $('t-tot'),
+          lyr: $('amLyrics'), playIcon: $('icon-play'), pauseIcon: $('icon-pause')
         };
 
-        // Events
-        this.els.playBtn.onclick = () => this.toggle();
-        $('fileInput').onchange = (e) => this.handleFiles(e.target.files);
-        
-        this.audio.ontimeupdate = () => this.update();
-        this.audio.onended = () => this.next();
+        $('playBtn').onclick = () => this.toggle();
+        $('fileInput').onchange = (e) => this.load(e.target.files);
+
+        this.audio.ontimeupdate = () => {
+          const time = this.audio.currentTime;
+          const duration = this.audio.duration;
+          const percent = (time / duration) * 100;
+          this.els.fill.style.width = `${percent}%`;
+          this.els.cur.textContent = this.format(time);
+          this.els.tot.textContent = this.format(duration);
+          this.els.lyr.setAttribute('current-time', time);
+        };
       }
 
-      async handleFiles(files) {
-        this.queue = Array.from(files).map(f => ({
-          file: f,
-          url: URL.createObjectURL(f),
-          name: f.name.replace(/\.[^.]+$/, '')
-        }));
-        this.play(0);
+      async load(files) {
+        // Reset queue to prevent that "ends of the earth" ghosting
+        this.queue = []; 
+        for (const file of Array.from(files)) {
+          // Force ALAC/M4A recognition by checking extension
+          const isALAC = file.name.toLowerCase().endsWith('.m4a');
+          const url = URL.createObjectURL(file);
+          this.queue.push({
+            file,
+            url,
+            title: file.name.replace(/\.[^.]+$/, ''),
+            type: isALAC ? 'audio/mp4' : file.type 
+          });
+        }
+        if (this.queue.length > 0) this.play(0);
       }
 
       play(index) {
-        this.currentIndex = index;
+        this.idx = index;
         const track = this.queue[index];
-        this.audio.src = track.url;
-        this.audio.play();
-        this.isPlaying = true;
-        this.updateUI(track.name);
         
-        // Fetch Metadata using Apple Music iTunes API
-        this.fetchMeta(track.name);
+        // Ensure Audio object handles the specific MIME type for ALAC
+        this.audio.src = track.url;
+        this.audio.type = track.type;
+        
+        this.audio.play().catch(e => console.error("Playback Blocked:", e));
+        this.playing = true;
+        this.updateUI(track.title, "Local ALAC Lossless");
+        this.fetchMetadata(track.title);
       }
 
-      async fetchMeta(query) {
+      async fetchMetadata(query) {
         try {
           const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=1`);
           const data = await res.json();
           if (data.results[0]) {
             const t = data.results[0];
-            const art = t.artworkUrl100.replace('100x100bb', '800x800bb');
+            const highRes = t.artworkUrl100.replace('100x100bb', '1000x1000bb');
             this.els.title.textContent = t.trackName;
             this.els.artist.textContent = t.artistName;
-            this.els.art.src = art;
-            this.els.bg.src = art;
+            this.els.art.src = highRes;
+            this.els.bg.src = highRes;
             this.els.bg.classList.add('visible');
-            this.els.lyrics.setAttribute('song-title', t.trackName);
-            this.els.lyrics.setAttribute('song-artist', t.artistName);
+            this.els.lyr.setAttribute('song-title', t.trackName);
+            this.els.lyr.setAttribute('song-artist', t.artistName);
           }
-        } catch(e) { console.warn("Meta Fetch Failed"); }
+        } catch (e) { console.warn("Meta error"); }
       }
 
       toggle() {
         if (this.audio.paused) {
           this.audio.play();
-          this.isPlaying = true;
+          this.playing = true;
         } else {
           this.audio.pause();
-          this.isPlaying = false;
+          this.playing = false;
         }
-        this.updateUI();
+        this.updatePlayState();
       }
 
-      update() {
-        const p = (this.audio.currentTime / this.audio.duration) * 100;
-        this.els.fill.style.width = `${p}%`;
-        this.els.cur.textContent = this.format(this.audio.currentTime);
-        this.els.tot.textContent = this.format(this.audio.duration);
-        this.els.lyrics.setAttribute('current-time', this.audio.currentTime);
+      updatePlayState() {
+        this.els.playIcon.classList.toggle('hidden', this.playing);
+        this.els.pauseIcon.classList.toggle('hidden', !this.playing);
+      }
+
+      updateUI(t, a) {
+        this.els.title.textContent = t;
+        this.els.artist.textContent = a;
+        this.updatePlayState();
       }
 
       format(s) {
-        if (!s) return "0:00";
-        const min = Math.floor(s / 60);
+        if (isNaN(s)) return "0:00";
+        const m = Math.floor(s / 60);
         const sec = Math.floor(s % 60).toString().padStart(2, '0');
-        return `${min}:${sec}`;
+        return `${m}:${sec}`;
       }
-
-      updateUI(name) {
-        if (name) this.els.title.textContent = name;
-        document.getElementById('icon-play').classList.toggle('hidden', this.isPlaying);
-        document.getElementById('icon-pause').classList.toggle('hidden', !this.isPlaying);
-        this.els.card.classList.toggle('playing', this.isPlaying);
-      }
+      
+      next() { if (this.idx < this.queue.length - 1) this.play(this.idx + 1); }
+      prev() { if (this.idx > 0) this.play(this.idx - 1); }
     }
 
-    // Launch
     const core = new LosslessCore();
   </script>
 </body>
