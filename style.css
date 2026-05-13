@@ -1,125 +1,96 @@
-/* ── Variables: The AM Palette ──────────────────────── */
 :root {
-  --safe-t: env(safe-area-inset-top,    0px);
-  --safe-b: env(safe-area-inset-bottom, 20px);
-  
-  /* AM uses slightly softer whites and deeper translucency */
-  --text:      #ffffff;
-  --text-2:    rgba(255,255,255,0.7);
-  --text-3:    rgba(255,255,255,0.45);
-  
-  /* The "Glass" effect */
-  --surface:   rgba(255,255,255,0.1);
-  --surface-2: rgba(255,255,255,0.18);
-  --border:    rgba(255,255,255,0.12);
-
-  --font:  'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  
-  /* Apple's signature smooth corners (Squircles) */
-  --r-art:     22px; 
-  --r-drawer:  32px;
+  --safe-t: env(safe-area-inset-top, 20px);
+  --safe-b: env(safe-area-inset-bottom, 30px);
+  --primary: #fff;
+  --accent: #fe2c55; /* Apple Music Red */
+  --font: 'Nunito', sans-serif;
 }
 
-/* ── Base ───────────────────────────────────────────── */
-html, body {
-  background: #000; /* Pure black base for the blur to pop */
-  color: var(--text);
+* { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+body {
+  margin: 0; padding: 0;
+  background: #000;
   font-family: var(--font);
-  letter-spacing: -0.01em; /* Tighter tracking like iOS */
+  color: #fff;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-/* ── The Dynamic Background (The AM Soul) ───────────── */
-#bg-art {
-  filter: blur(50px) brightness(0.6) saturate(1.4); /* Brighter and sharper blur */
-  transform: scale(1.1); /* Prevent white edges */
+/* Background Engine */
+#bg { position: fixed; inset: -50px; z-index: -2; overflow: hidden; }
+#bg-art { 
+  width: 110%; height: 110%; object-fit: cover; 
+  filter: blur(80px) brightness(0.5) saturate(1.6);
+  transition: opacity 0.8s ease-in-out;
+}
+#scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: -1; }
+
+#player {
+  display: flex; flex-direction: column;
+  height: 100%;
+  padding: var(--safe-t) 25px var(--safe-b);
 }
 
-/* ── Art Section: The Floating Card ─────────────────── */
+#top-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  height: 44px;
+}
+
+#module-indicator {
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;
+  background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 6px;
+}
+
+/* Art & Squircles */
+#art-container {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  perspective: 1000px;
+}
+
 #art-card {
-  width: min(80vw, 320px); /* Slightly larger */
-  height: min(80vw, 320px);
-  border-radius: var(--r-art);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-  background: #1a1a1a;
-  border: none; /* AM art usually doesn't have a border */
-}
-
-/* Scale up smoothly when playing */
-#art-card.playing {
-  transform: scale(1.06);
+  width: 100%; max-width: 340px; aspect-ratio: 1/1;
+  background: #222; border-radius: 28px; /* High radius for AM look */
   box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
 }
+#art-card img { width: 100%; height: 100%; object-fit: cover; }
+#art-card.playing { transform: scale(1.05); }
 
-/* ── Meta & Titles ──────────────────────────────────── */
-#title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.03em; /* Aggressive Apple-style kerning */
+/* Typography */
+#track-info {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 20px;
 }
+#track-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 2px; }
+#track-artist { font-size: 1.2rem; font-weight: 400; color: rgba(255,255,255,0.6); }
 
-#artist {
-  font-size: 1.1rem;
-  color: var(--text-2);
-  font-weight: 400;
-}
+/* Progress */
+#progress-container { margin-top: 30px; }
+#time-row { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; opacity: 0.5; margin-bottom: 8px; }
+#progress-bar { height: 6px; background: rgba(255,255,255,0.15); border-radius: 10px; position: relative; }
+#progress-fill { height: 100%; background: #fff; border-radius: 10px; width: 0%; }
 
-/* ── Seekbar: The "Pill" Style ──────────────────────── */
-#seek-track {
-  height: 6px; /* Thicker, more touchable track */
-  background: rgba(255,255,255,0.2);
-  border-radius: 10px;
+/* Transport */
+#transport-controls {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 40px; margin-bottom: 30px;
 }
+.play-key { 
+  width: 80px; height: 80px; background: none; border: none; color: #fff;
+}
+.play-key svg { width: 60px; height: 60px; }
+.key-btn svg { width: 35px; height: 35px; fill: #fff; }
+.sub-btn { opacity: 0.4; background: none; border: none; color: #fff; }
+.sub-btn svg { width: 22px; }
+.hidden { display: none; }
 
-#seek-fill {
-  background: var(--text);
-  border-radius: 10px;
+/* Dock */
+#bottom-dock {
+  display: flex; justify-content: space-around;
+  padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.08);
 }
-
-#seek-thumb {
-  width: 0; /* AM usually hides the thumb until touched */
-  height: 0;
-}
-
-#seekbar:active #seek-thumb {
-  width: 18px;
-  height: 18px;
-  opacity: 1;
-}
-
-/* ── Controls: The Heavy Icons ──────────────────────── */
-.play-btn {
-  width: 72px;
-  height: 72px;
-  background: transparent; /* AM uses ghost buttons or text-color icons */
-  color: var(--text);
-  box-shadow: none;
-}
-
-.play-btn svg {
-  width: 42px;
-  height: 42px;
-}
-
-.ctrl-main svg {
-  width: 32px;
-  height: 32px;
-  fill: currentColor; /* Bold, solid shapes */
-}
-
-/* ── Queue & Lyrics: Ultra-Glass ────────────────────── */
-.drawer, .sheet {
-  background: rgba(35, 35, 35, 0.75);
-  backdrop-filter: blur(50px) saturate(1.8) brightness(0.8);
-  -webkit-backdrop-filter: blur(50px) saturate(1.8) brightness(0.8);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-/* ── Action Buttons ─────────────────────────────────── */
-.action-btn {
-  background: rgba(255,255,255,0.08);
-  border: none;
-  padding: 12px 24px;
-  font-weight: 700;
-  color: var(--text);
-  border-radius: 14px; /* More blocky but rounded */
-}
+.dock-item { background: none; border: none; color: rgba(255,255,255,0.4); font-weight: 700; font-size: 0.8rem; }
+.dock-item.active { color: #fff; }
+.icon-btn { background: none; border: none; color: #fff; }
