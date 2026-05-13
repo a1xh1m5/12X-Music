@@ -1,0 +1,125 @@
+/* ── Variables: The AM Palette ──────────────────────── */
+:root {
+  --safe-t: env(safe-area-inset-top,    0px);
+  --safe-b: env(safe-area-inset-bottom, 20px);
+  
+  /* AM uses slightly softer whites and deeper translucency */
+  --text:      #ffffff;
+  --text-2:    rgba(255,255,255,0.7);
+  --text-3:    rgba(255,255,255,0.45);
+  
+  /* The "Glass" effect */
+  --surface:   rgba(255,255,255,0.1);
+  --surface-2: rgba(255,255,255,0.18);
+  --border:    rgba(255,255,255,0.12);
+
+  --font:  'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Apple's signature smooth corners (Squircles) */
+  --r-art:     22px; 
+  --r-drawer:  32px;
+}
+
+/* ── Base ───────────────────────────────────────────── */
+html, body {
+  background: #000; /* Pure black base for the blur to pop */
+  color: var(--text);
+  font-family: var(--font);
+  letter-spacing: -0.01em; /* Tighter tracking like iOS */
+}
+
+/* ── The Dynamic Background (The AM Soul) ───────────── */
+#bg-art {
+  filter: blur(50px) brightness(0.6) saturate(1.4); /* Brighter and sharper blur */
+  transform: scale(1.1); /* Prevent white edges */
+}
+
+/* ── Art Section: The Floating Card ─────────────────── */
+#art-card {
+  width: min(80vw, 320px); /* Slightly larger */
+  height: min(80vw, 320px);
+  border-radius: var(--r-art);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  background: #1a1a1a;
+  border: none; /* AM art usually doesn't have a border */
+}
+
+/* Scale up smoothly when playing */
+#art-card.playing {
+  transform: scale(1.06);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+}
+
+/* ── Meta & Titles ──────────────────────────────────── */
+#title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em; /* Aggressive Apple-style kerning */
+}
+
+#artist {
+  font-size: 1.1rem;
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+/* ── Seekbar: The "Pill" Style ──────────────────────── */
+#seek-track {
+  height: 6px; /* Thicker, more touchable track */
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+}
+
+#seek-fill {
+  background: var(--text);
+  border-radius: 10px;
+}
+
+#seek-thumb {
+  width: 0; /* AM usually hides the thumb until touched */
+  height: 0;
+}
+
+#seekbar:active #seek-thumb {
+  width: 18px;
+  height: 18px;
+  opacity: 1;
+}
+
+/* ── Controls: The Heavy Icons ──────────────────────── */
+.play-btn {
+  width: 72px;
+  height: 72px;
+  background: transparent; /* AM uses ghost buttons or text-color icons */
+  color: var(--text);
+  box-shadow: none;
+}
+
+.play-btn svg {
+  width: 42px;
+  height: 42px;
+}
+
+.ctrl-main svg {
+  width: 32px;
+  height: 32px;
+  fill: currentColor; /* Bold, solid shapes */
+}
+
+/* ── Queue & Lyrics: Ultra-Glass ────────────────────── */
+.drawer, .sheet {
+  background: rgba(35, 35, 35, 0.75);
+  backdrop-filter: blur(50px) saturate(1.8) brightness(0.8);
+  -webkit-backdrop-filter: blur(50px) saturate(1.8) brightness(0.8);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Action Buttons ─────────────────────────────────── */
+.action-btn {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  padding: 12px 24px;
+  font-weight: 700;
+  color: var(--text);
+  border-radius: 14px; /* More blocky but rounded */
+}
