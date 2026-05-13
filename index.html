@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Lossless Core | ALAC Reference</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=DM+Mono:wght@400;500&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+  <title>Lossless Core | ALAC Engine</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@uimaxbai/am-lyrics/dist/src/am-lyrics.min.js"></script>
 
@@ -12,30 +12,34 @@
     :root {
       --safe-t: env(safe-area-inset-top, 0px);
       --safe-b: env(safe-area-inset-bottom, 20px);
-      --font: 'Nunito', sans-serif;
+      --accent: #fe2c55;
     }
 
-    body { margin: 0; background: #000; color: #fff; font-family: var(--font); height: 100dvh; overflow: hidden; }
+    body { margin: 0; background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; height: 100dvh; overflow: hidden; }
 
-    /* PC Split-View Optimization */
+    /* Layout: Fixed Clutter & Mobile view */
     .content-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 40px;
-      max-width: 1600px;
+      max-width: 1400px;
       margin: 0 auto;
-      height: 80vh;
+      height: 75vh;
       padding: 40px;
       align-items: center;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 1000px) {
       .content-grid { grid-template-columns: 1fr; padding: 20px; }
-      #lyrics-section { display: none; }
+      #lyrics-section { 
+        position: fixed; inset: 0; background: #000; z-index: 100;
+        display: none; padding: calc(var(--safe-t) + 20px) 20px;
+      }
+      #lyrics-section.active { display: block; }
     }
 
     #bg { position: fixed; inset: -50px; z-index: -1; }
-    #bg-art { width: 110%; height: 110%; object-fit: cover; filter: blur(60px) brightness(0.3); opacity: 0; transition: opacity 1s; }
+    #bg-art { width: 110%; height: 110%; object-fit: cover; filter: blur(60px) brightness(0.2); opacity: 0; transition: opacity 1s; }
     #bg-art.visible { opacity: 1; }
 
     #art-card { width: 100%; aspect-ratio: 1/1; border-radius: 24px; background: #111; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
@@ -50,7 +54,9 @@
     
     #meta h1 { font-size: 1.8rem; margin: 10px 0 5px; }
     #meta h2 { font-size: 1.2rem; opacity: 0.6; font-weight: 400; }
-    #source-pill { font-family: 'DM Mono'; font-size: 0.7rem; background: #fe2c55; padding: 4px 8px; border-radius: 4px; width: fit-content; }
+    
+    #bottom-dock { display: flex; justify-content: space-around; padding: 20px; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
+    .dock-item { background: none; border: none; color: white; font-weight: 800; font-size: 0.8rem; }
 
     am-lyrics { --am-lyrics-font-size: 2.2rem; height: 100%; }
   </style>
@@ -62,22 +68,12 @@
   <main id="player">
     <div class="content-grid">
       <section id="now-playing">
-        <div id="source-pill">ALAC_BITPERFECT_READY</div>
         <div id="art-card"><img id="art" src="" alt=""></div>
-        
         <div id="meta">
           <h1 id="title">Lossless Core</h1>
-          <h2 id="artist">Waiting for ALAC Import...</h2>
+          <h2 id="artist">Ready for ALAC</h2>
         </div>
-
-        <div id="seek-area">
-          <div id="seek-track" id="seekbar"><div id="seek-fill"></div></div>
-          <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.8rem; opacity:0.5;">
-            <span id="t-cur">0:00</span>
-            <span id="t-tot">0:00</span>
-          </div>
-        </div>
-
+        <div id="seek-track" id="seekbar"><div id="seek-fill"></div></div>
         <div id="controls">
           <button class="icon-btn" onclick="core.prev()"><svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
           <button class="play-btn" id="playBtn">
@@ -86,14 +82,19 @@
           </button>
           <button class="icon-btn" onclick="core.next()"><svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
         </div>
-        
-        <button style="margin-top:20px; width:100%; height:50px; border-radius:12px; background:rgba(255,255,255,0.1); border:none; color:white; font-weight:800;" onclick="document.getElementById('fileInput').click()">IMPORT ALAC FILES</button>
       </section>
 
       <section id="lyrics-section">
+        <button onclick="document.getElementById('lyrics-section').classList.remove('active')" style="color:white; background:none; border:none; margin-bottom:20px;" id="lyricClose">Close Lyrics</button>
         <am-lyrics id="amLyrics" current-time="0" highlight-color="#ffffff"></am-lyrics>
       </section>
     </div>
+
+    <footer id="bottom-dock">
+      <button class="dock-item" onclick="document.getElementById('fileInput').click()">IMPORT</button>
+      <button class="dock-item" onclick="document.getElementById('lyrics-section').classList.add('active')">LYRICS</button>
+      <button class="dock-item" onclick="location.reload()">RESET</button>
+    </footer>
   </main>
 
   <input type="file" id="fileInput" hidden multiple accept="audio/*,.m4a">
@@ -112,106 +113,76 @@
         const $ = i => document.getElementById(i);
         this.els = {
           title: $('title'), artist: $('artist'), art: $('art'), bg: $('bg-art'),
-          fill: $('seek-fill'), cur: $('t-cur'), tot: $('t-tot'),
-          lyr: $('amLyrics'), playIcon: $('icon-play'), pauseIcon: $('icon-pause')
+          fill: $('seek-fill'), lyr: $('amLyrics'), playIcon: $('icon-play'), pauseIcon: $('icon-pause')
         };
-
         $('playBtn').onclick = () => this.toggle();
         $('fileInput').onchange = (e) => this.load(e.target.files);
-
         this.audio.ontimeupdate = () => {
-          const time = this.audio.currentTime;
-          const duration = this.audio.duration;
-          const percent = (time / duration) * 100;
-          this.els.fill.style.width = `${percent}%`;
-          this.els.cur.textContent = this.format(time);
-          this.els.tot.textContent = this.format(duration);
-          this.els.lyr.setAttribute('current-time', time);
+          this.els.fill.style.width = `${(this.audio.currentTime / this.audio.duration) * 100}%`;
+          this.els.lyr.setAttribute('current-time', this.audio.currentTime);
         };
       }
 
       async load(files) {
-        // Reset queue to prevent that "ends of the earth" ghosting
-        this.queue = []; 
-        for (const file of Array.from(files)) {
-          // Force ALAC/M4A recognition by checking extension
-          const isALAC = file.name.toLowerCase().endsWith('.m4a');
-          const url = URL.createObjectURL(file);
-          this.queue.push({
-            file,
-            url,
-            title: file.name.replace(/\.[^.]+$/, ''),
-            type: isALAC ? 'audio/mp4' : file.type 
-          });
-        }
+        this.queue = Array.from(files).map(f => ({
+          url: URL.createObjectURL(f),
+          name: f.name.replace(/\.[^.]+$/, ''),
+          isALAC: f.name.toLowerCase().endsWith('.m4a')
+        }));
         if (this.queue.length > 0) this.play(0);
       }
 
       play(index) {
         this.idx = index;
         const track = this.queue[index];
-        
-        // Ensure Audio object handles the specific MIME type for ALAC
         this.audio.src = track.url;
-        this.audio.type = track.type;
-        
-        this.audio.play().catch(e => console.error("Playback Blocked:", e));
+        if (track.isALAC) this.audio.type = 'audio/mp4';
+        this.audio.play();
         this.playing = true;
-        this.updateUI(track.title, "Local ALAC Lossless");
-        this.fetchMetadata(track.title);
+        this.updateUI(track.name);
+        this.fetchMetadata(track.name);
       }
 
-      async fetchMetadata(query) {
+      async fetchMetadata(fileName) {
+        // Splitting file name to get cleaner search queries (e.g., "Artist - Title")
+        let query = fileName;
+        if (fileName.includes(" - ")) {
+           const parts = fileName.split(" - ");
+           query = `${parts[1]} ${parts[0]}`; // Rearrange for iTunes
+        }
+        
         try {
           const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=1`);
           const data = await res.json();
           if (data.results[0]) {
             const t = data.results[0];
-            const highRes = t.artworkUrl100.replace('100x100bb', '1000x1000bb');
+            const art = t.artworkUrl100.replace('100x100bb', '1000x1000bb');
             this.els.title.textContent = t.trackName;
             this.els.artist.textContent = t.artistName;
-            this.els.art.src = highRes;
-            this.els.bg.src = highRes;
+            this.els.art.src = art;
+            this.els.bg.src = art;
             this.els.bg.classList.add('visible');
             this.els.lyr.setAttribute('song-title', t.trackName);
             this.els.lyr.setAttribute('song-artist', t.artistName);
           }
-        } catch (e) { console.warn("Meta error"); }
+        } catch (e) {}
       }
 
       toggle() {
-        if (this.audio.paused) {
-          this.audio.play();
-          this.playing = true;
-        } else {
-          this.audio.pause();
-          this.playing = false;
-        }
-        this.updatePlayState();
+        this.audio.paused ? this.audio.play() : this.audio.pause();
+        this.playing = !this.audio.paused;
+        this.updateUI();
       }
 
-      updatePlayState() {
+      updateUI(t) {
+        if (t) this.els.title.textContent = t;
         this.els.playIcon.classList.toggle('hidden', this.playing);
         this.els.pauseIcon.classList.toggle('hidden', !this.playing);
-      }
-
-      updateUI(t, a) {
-        this.els.title.textContent = t;
-        this.els.artist.textContent = a;
-        this.updatePlayState();
-      }
-
-      format(s) {
-        if (isNaN(s)) return "0:00";
-        const m = Math.floor(s / 60);
-        const sec = Math.floor(s % 60).toString().padStart(2, '0');
-        return `${m}:${sec}`;
       }
       
       next() { if (this.idx < this.queue.length - 1) this.play(this.idx + 1); }
       prev() { if (this.idx > 0) this.play(this.idx - 1); }
     }
-
     const core = new LosslessCore();
   </script>
 </body>
