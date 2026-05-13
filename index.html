@@ -6,7 +6,7 @@
   <title>Lossless Core</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
 
   <style>
@@ -17,93 +17,73 @@
       --safe-b: env(safe-area-inset-bottom, 0px);
     }
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+    body { margin: 0; background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; height: 100dvh; overflow: hidden; }
 
-    body { 
-      margin: 0; background: #000; color: #fff; 
-      font-family: 'Plus Jakarta Sans', sans-serif; 
-      height: 100dvh; overflow: hidden;
-    }
-
-    /* ── DYNAMIC BACKGROUND LAYER ── */
     #canvas-bg {
       position: fixed; inset: 0;
       background: radial-gradient(circle at top left, var(--bg-dynamic) 0%, #000 100%);
       z-index: -1; transition: background 2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ── NAVIGATION BLOCKS ── */
+    /* ── TAB NAVIGATION ── */
     .tab-content {
       height: 100dvh; width: 100%;
-      padding: calc(var(--safe-t) + 20px) 20px 180px; 
+      padding: calc(var(--safe-t) + 20px) 20px 200px; 
       display: none; position: absolute; top: 0; left: 0;
       overflow-y: auto; -webkit-overflow-scrolling: touch;
     }
     .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.99); } to { opacity: 1; transform: scale(1); } }
 
-    @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+    .section-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 25px; letter-spacing: -0.05em; display: flex; justify-content: space-between; align-items: center; }
 
-    .section-title { font-size: 2rem; font-weight: 800; margin-bottom: 25px; letter-spacing: -0.05em; }
+    /* ── GRIDS ── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 12px; transition: 0.2s; }
+    .card:active { transform: scale(0.96); }
+    .card img { width: 100%; aspect-ratio: 1; border-radius: 14px; object-fit: cover; margin-bottom: 10px; background: #1a1a1a; }
+    .t-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .t-sub { font-size: 0.75rem; opacity: 0.5; margin-top: 2px; }
 
-    /* ── LIBRARY GRID ── */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-    .card { 
-      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px; padding: 12px; transition: 0.2s;
-    }
-    .card:active { transform: scale(0.96); background: rgba(255,255,255,0.08); }
-    .card img { width: 100%; aspect-ratio: 1; border-radius: 14px; object-fit: cover; margin-bottom: 10px; }
-    .t-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .t-sub { font-size: 0.8rem; opacity: 0.5; margin-top: 2px; }
-
-    /* ── FIXED BOTTOM PLAYER (MINI) ── */
+    /* ── MINI PLAYER ── */
     #mini-player {
-      position: fixed; bottom: calc(90px + var(--safe-b)); left: 15px; right: 15px;
-      height: 64px; background: rgba(25, 25, 25, 0.85); backdrop-filter: blur(30px);
+      position: fixed; bottom: calc(85px + var(--safe-b)); left: 10px; right: 10px;
+      height: 64px; background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
       border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
       display: flex; align-items: center; padding: 0 12px; z-index: 1000;
     }
 
-    /* ── FULL SCREEN PLAYER ── */
+    /* ── FULL PLAYER ── */
     #full-player {
       position: fixed; inset: 0; background: #000; z-index: 2000;
       transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-      display: flex; flex-direction: column; padding: calc(var(--safe-t) + 20px) 30px var(--safe-b);
+      display: flex; flex-direction: column; padding: calc(var(--safe-t) + 15px) 30px var(--safe-b);
     }
     #full-player.active { transform: translateY(0); }
 
-    .art-container { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; }
-    #big-art { 
-      width: 100%; max-width: 350px; aspect-ratio: 1; border-radius: 24px; 
-      box-shadow: 0 30px 60px rgba(0,0,0,0.7); object-fit: cover;
-      transition: transform 0.4s ease;
-    }
-    .playing #big-art { transform: scale(1.04); }
+    .art-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+    #big-art { width: 100%; max-width: 360px; aspect-ratio: 1; border-radius: 24px; box-shadow: 0 40px 80px rgba(0,0,0,0.8); object-fit: cover; transition: transform 0.4s; }
+    
+    .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 30px 0; position: relative; }
+    #progress-fill { position: absolute; height: 100%; background: #fff; border-radius: 2px; width: 0%; }
 
-    /* ── CONTROLS ── */
-    .progress-wrap { margin: 30px 0; }
-    .slider {
-      -webkit-appearance: none; width: 100%; height: 5px; background: rgba(255,255,255,0.15);
-      border-radius: 10px; outline: none;
-    }
-    .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #fff; border-radius: 50%; }
-
-    .controls-row { display: flex; justify-content: space-around; align-items: center; width: 100%; margin-bottom: 40px; }
-    .play-trigger { 
-      width: 80px; height: 80px; background: #fff; color: #000; border-radius: 50%; 
-      display: flex; align-items: center; justify-content: center;
-    }
+    .glyph-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 40px; }
+    .play-circle { width: 75px; height: 75px; background: #fff; color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
     /* ── NAV BAR ── */
     #nav-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
-      height: calc(80px + var(--safe-b)); background: rgba(0,0,0,0.9);
+      height: calc(75px + var(--safe-b)); background: rgba(0,0,0,0.95);
       border-top: 1px solid rgba(255,255,255,0.05);
       display: flex; justify-content: space-around; align-items: center;
       padding-bottom: var(--safe-b); z-index: 1500;
     }
-    .nav-btn { background: none; border: none; color: #555; font-size: 0.7rem; font-weight: 800; cursor: pointer; }
+    .nav-btn { background: none; border: none; color: #444; font-size: 0.65rem; font-weight: 800; display: flex; flex-direction: column; gap: 4px; align-items: center; }
     .nav-btn.active { color: #fff; }
+    .nav-btn svg { width: 22px; height: 22px; }
+
+    .mod-tag { font-size: 0.6rem; background: #fff; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: auto; }
   </style>
 </head>
 <body>
@@ -111,65 +91,57 @@
   <div id="canvas-bg"></div>
 
   <div id="view-home" class="tab-content active">
-    <div class="section-title">Recently Played</div>
-    <div id="recent-list" class="grid"></div>
+    <div class="section-title">Home</div>
+    <div id="recent-grid" class="grid"></div>
   </div>
 
   <div id="view-search" class="tab-content">
     <div class="section-title">Search</div>
-    <input type="text" placeholder="Artists, songs..." style="width:100%; padding:15px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:1rem;">
-    <p style="opacity:0.3; margin-top:20px;">Search functionality ready for local index.</p>
+    <input type="text" id="search-input" placeholder="Search music..." style="width:100%; padding:16px; border-radius:14px; border:1px solid #222; background:#111; color:#fff; font-size:1rem;">
+    <div id="search-results" class="grid" style="margin-top:20px;"></div>
   </div>
 
   <div id="view-library" class="tab-content">
-    <div class="section-title">Your Collection</div>
-    <div class="grid">
-        <div class="card" onclick="$('file-input').click()">
-            <div style="height:140px; display:flex; align-items:center; justify-content:center; font-size:2rem; opacity:0.2;">+</div>
-            <div class="t-name">Add Music</div>
-            <div class="t-sub">Import ALAC/FLAC</div>
-        </div>
-    </div>
+    <div class="section-title">Library <button onclick="$('file-input').click()" style="background:none; border:none; color:#fff; font-size:1.5rem;">+</button></div>
+    <div id="lib-grid" class="grid"></div>
   </div>
 
-  <div id="mini-player" onclick="app.ui.openFull()">
-    <img id="mini-art" src="" style="width:40px; height:40px; border-radius:6px; background:#222; object-fit:cover;">
+  <div id="view-modules" class="tab-content">
+    <div class="section-title">Engines</div>
+    <div id="mod-list"></div>
+    <button class="card" style="width:100%; border:1px dashed #444; margin-top:15px;" onclick="$('mod-input').click()">+ Load Engine File</button>
+  </div>
+
+  <div id="mini-player" onclick="app.ui.open()">
+    <img id="m-art" src="" style="width:44px; height:44px; border-radius:8px; background:#222; object-fit:cover;">
     <div style="flex:1; margin:0 12px; overflow:hidden;">
-      <div id="mini-title" class="t-name">No Track</div>
-      <div id="mini-artist" class="t-sub">Select a file</div>
+      <div id="m-title" class="t-name">Core Ready</div>
+      <div id="m-artist" class="t-sub">Select track</div>
     </div>
     <button onclick="event.stopPropagation(); app.toggle();" style="background:none; border:none; color:#fff;">
-      <svg id="mini-play-svg" width="30" height="30" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="m-play-svg" width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </button>
   </div>
 
   <div id="full-player">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <button onclick="app.ui.closeFull()" style="background:none; border:none; color:#fff;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg></button>
-      <div style="font-size:0.65rem; font-weight:800; letter-spacing:0.1em; opacity:0.4;">BIT-PERFECT OUTPUT</div>
+      <button onclick="app.ui.close()" style="background:none; border:none; color:#fff;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 9l-7 7-7-7"/></svg></button>
+      <div style="font-size:0.65rem; font-weight:800; letter-spacing:0.1em; opacity:0.5;" id="quality-tag">BIT-PERFECT</div>
       <button style="background:none; border:none; color:#fff;"><svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
     </div>
 
-    <div class="art-container">
-      <img id="big-art" src="" crossorigin="anonymous">
-    </div>
+    <div class="art-wrap"><img id="big-art" src="" crossorigin="anonymous"></div>
 
     <div style="width:100%;">
-      <div id="big-title" style="font-size:1.8rem; font-weight:800; margin-bottom:5px;">Untitled</div>
-      <div id="big-artist" style="font-size:1.2rem; opacity:0.5;">Unknown Artist</div>
+      <div id="big-title" style="font-size:1.8rem; font-weight:800; margin-bottom:4px;">Untitled</div>
+      <div id="big-artist" style="font-size:1.1rem; opacity:0.5;">No Track Selected</div>
 
-      <div class="progress-wrap">
-        <input type="range" id="scrubber" class="slider" value="0">
-        <div style="display:flex; justify-content:space-between; font-size:0.75rem; opacity:0.4; margin-top:8px;">
-          <span id="cur-time">0:00</span>
-          <span id="dur-time">0:00</span>
-        </div>
-      </div>
+      <div class="progress-bar"><div id="progress-fill"></div></div>
 
-      <div class="controls-row">
+      <div class="glyph-row">
         <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-        <div class="play-trigger" onclick="app.toggle()">
-          <svg id="big-play-svg" width="40" height="40" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <div class="play-circle" onclick="app.toggle()">
+          <svg id="big-play-svg" width="42" height="42" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </div>
         <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zm9-12h2v12h-2z"/></svg>
       </div>
@@ -177,97 +149,115 @@
   </div>
 
   <nav id="nav-bar">
-    <button class="nav-btn active" onclick="app.ui.switch('home')">Home</button>
-    <button class="nav-btn" onclick="app.ui.switch('search')">Search</button>
-    <button class="nav-btn" onclick="app.ui.switch('library')">Library</button>
+    <button class="nav-btn active" onclick="app.ui.tab('home')"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</button>
+    <button class="nav-btn" onclick="app.ui.tab('search')"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Search</button>
+    <button class="nav-btn" onclick="app.ui.tab('library')"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>Library</button>
+    <button class="nav-btn" onclick="app.ui.tab('modules')"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M20 12c0-1.1-.9-2-2-2h-3c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h3c1.1 0 2-.9 2-2v-3zM10 12c0-1.1-.9-2-2-2H5c-1.1 0-2-2v3c0 1.1.9 2 2 2h3c1.1 0 2-.9 2-2v-3zM10 4c0-1.1-.9-2-2-2H5c-1.1 0-2 2v3c0 1.1.9 2 2 2h3c1.1 0 2-.9 2-2V4zm10 0c0-1.1-.9-2-2-2h-3c-1.1 0-2 2v3c0 1.1.9 2 2 2h3c1.1 0 2-.9 2-2V4z"/></svg>Engines</button>
   </nav>
 
   <input type="file" id="file-input" hidden accept="audio/*">
+  <input type="file" id="mod-input" hidden accept=".8spine,.js">
 
   <script>
     const $ = id => document.getElementById(id);
     const thief = new ColorThief();
 
+    // ── THE 8SPINE BRIDGE (MANDATORY) ──
+    window._bridge = {
+        updateMeta: (t, a, alb, art) => {
+            $('m-title').textContent = t; $('m-artist').textContent = a;
+            $('big-title').textContent = t; $('big-artist').textContent = a;
+            if(art) { $('m-art').src = art; $('big-art').src = art; }
+        },
+        setAudioUrl: (url) => { app.audio.src = url; app.audio.play(); app.playing = true; app.syncIcons(); },
+        setQualityLabel: (txt) => $('quality-tag').textContent = txt,
+        getAudioContext: () => new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 192000 })
+    };
+
     class LosslessCore {
       constructor() {
         this.audio = new Audio();
-        this.currentView = 'home';
+        this.playing = false;
+        this.modules = [];
         this.ui = {
-          switch: (id) => {
+          tab: id => {
             document.querySelectorAll('.tab-content').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             $(`view-${id}`).classList.add('active');
             event.currentTarget.classList.add('active');
-            this.currentView = id;
           },
-          openFull: () => $('full-player').classList.add('active'),
-          closeFull: () => $('full-player').classList.remove('active')
+          open: () => $('full-player').classList.add('active'),
+          close: () => $('full-player').classList.remove('active')
         };
         this.init();
       }
 
       init() {
         $('file-input').onchange = e => this.loadLocal(e.target.files[0]);
+        $('mod-input').onchange = e => this.loadMod(e.target.files[0]);
+        $('search-input').oninput = e => this.search(e.target.value);
         
         this.audio.ontimeupdate = () => {
           const p = (this.audio.currentTime / this.audio.duration) * 100 || 0;
-          $('scrubber').value = p;
-          $('cur-time').textContent = this.fmt(this.audio.currentTime);
-          $('dur-time').textContent = this.fmt(this.audio.duration);
+          $('progress-fill').style.width = `${p}%`;
         };
 
-        $('scrubber').oninput = e => {
-          this.audio.currentTime = (e.target.value / 100) * this.audio.duration;
+        $('big-art').onload = () => {
+          try {
+            const pal = thief.getPalette($('big-art'), 3);
+            document.documentElement.style.setProperty('--bg-dynamic', `rgb(${pal[0].join(',')})`);
+          } catch(e) {}
         };
+      }
 
-        $('big-art').onload = () => this.updateColors();
+      async loadMod(file) {
+        const code = await file.text();
+        const s = document.createElement('script');
+        s.textContent = code;
+        document.head.appendChild(s);
+        this.modules.push(file.name);
+        this.renderMods();
+      }
+
+      renderMods() {
+        $('mod-list').innerHTML = this.modules.map(m => `
+          <div class="card" style="display:flex; align-items:center; margin-bottom:10px;">
+            <span>${m}</span><span class="mod-tag">ACTIVE</span>
+          </div>
+        `).join('');
       }
 
       loadLocal(file) {
-        if (!file) return;
+        if(!file) return;
         const url = URL.createObjectURL(file);
-        this.audio.src = url;
-        const name = file.name.split('.')[0];
-        
-        $('big-title').textContent = name;
-        $('mini-title').textContent = name;
-        $('big-artist').textContent = "Local Import";
-        
-        // Placeholder for art if no tags found
-        $('big-art').src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=800";
-        $('mini-art').src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=800";
-        
-        this.toggle();
-        this.ui.openFull();
+        _bridge.updateMeta(file.name.split('.')[0], "Local File", "", "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=800");
+        _bridge.setAudioUrl(url);
+        this.ui.open();
       }
 
       toggle() {
-        const icons = { play: '<path d="M8 5v14l11-7z"/>', pause: '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' };
-        if (this.audio.paused) {
-          this.audio.play();
-          $('big-play-svg').innerHTML = icons.pause;
-          $('mini-play-svg').innerHTML = icons.pause;
-          document.body.classList.add('playing');
-        } else {
-          this.audio.pause();
-          $('big-play-svg').innerHTML = icons.play;
-          $('mini-play-svg').innerHTML = icons.play;
-          document.body.classList.remove('playing');
-        }
+        if(this.audio.paused) { this.audio.play(); this.playing = true; }
+        else { this.audio.pause(); this.playing = false; }
+        this.syncIcons();
       }
 
-      updateColors() {
-        try {
-          const palette = thief.getPalette($('big-art'), 3);
-          const dominant = `rgb(${palette[0].join(',')})`;
-          document.documentElement.style.setProperty('--bg-dynamic', dominant);
-        } catch(e) {}
+      syncIcons() {
+        const pause = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+        const play = '<path d="M8 5v14l11-7z"/>';
+        $('m-play-svg').innerHTML = this.playing ? pause : play;
+        $('big-play-svg').innerHTML = this.playing ? pause : play;
       }
 
-      fmt(s) {
-        if (isNaN(s)) return "0:00";
-        const min = Math.floor(s/60), sec = Math.floor(s%60);
-        return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+      async search(q) {
+        if(q.length < 3) return;
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=12`);
+        const data = await res.json();
+        $('search-results').innerHTML = data.results.map(t => `
+          <div class="card" onclick="_bridge.updateMeta('${t.trackName.replace(/'/g,"")}','${t.artistName.replace(/'/g,"")}','','${t.artworkUrl100.replace('100x100','600x600')}')">
+            <img src="${t.artworkUrl100}">
+            <div class="t-name">${t.trackName}</div><div class="t-sub">${t.artistName}</div>
+          </div>
+        `).join('');
       }
     }
 
